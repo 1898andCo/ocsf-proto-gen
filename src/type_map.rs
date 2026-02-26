@@ -4,14 +4,20 @@
 //!
 //! | OCSF type | Proto type | Notes |
 //! |-----------|-----------|-------|
-//! | `string_t`, `hostname_t`, `ip_t`, `mac_t`, `url_t`, `email_t`, `uuid_t`, etc. | `string` | All string-like types |
-//! | `integer_t`, `port_t` | `int32` | |
-//! | `long_t`, `timestamp_t` | `int64` | |
-//! | `float_t` | `double` | |
-//! | `boolean_t` | `bool` | |
-//! | `json_t` | `string` | NOT `google.protobuf.Struct` (prost serde incompatible) |
-//! | `object_t` | message reference | Handled separately by the codegen module |
-//! | Unknown types | `string` | Fallback with warning |
+//! | OCSF type | Proto type | OCSF base type | Notes |
+//! |-----------|-----------|----------------|-------|
+//! | `boolean_t` | `bool` | primitive | |
+//! | `integer_t` | `int32` | primitive | Signed 32-bit |
+//! | `long_t` | `int64` | primitive | Signed 64-bit |
+//! | `float_t` | `double` | primitive | 64-bit float |
+//! | `string_t` | `string` | primitive | UTF-8 |
+//! | `json_t` | `string` | primitive | NOT `google.protobuf.Struct` |
+//! | `timestamp_t` | `int64` | `long_t` | Epoch milliseconds |
+//! | `port_t` | `int32` | `integer_t` | Range 0-65535 |
+//! | `datetime_t` | `string` | `string_t` | RFC 3339 format |
+//! | `hostname_t` .. `reg_key_path_t` | `string` | `string_t` | All string-derived types |
+//! | `object_t` | message ref | — | Handled by codegen module |
+//! | Unknown types | `string` | — | Fallback |
 
 /// Map an OCSF type name to a proto3 scalar type string.
 ///
@@ -21,10 +27,11 @@
 /// Returns `"string"` as a fallback for unrecognized types.
 pub fn ocsf_to_proto_type(type_name: &str) -> Option<&'static str> {
     let proto = match type_name {
-        // String family — all string-like OCSF types.
+        // String family — all string-like OCSF types (base type: string_t).
         "string_t" | "hostname_t" | "ip_t" | "mac_t" | "url_t" | "email_t" | "file_path_t"
-        | "file_name_t" | "path_t" | "subnet_t" | "uuid_t" | "username_t" | "process_name_t"
-        | "resource_uid_t" | "datetime_t" => "string",
+        | "file_name_t" | "file_hash_t" | "subnet_t" | "uuid_t" | "username_t"
+        | "process_name_t" | "resource_uid_t" | "datetime_t" | "bytestring_t"
+        | "reg_key_path_t" => "string",
 
         // json_t maps to string, NOT google.protobuf.Struct.
         // prost_types::Struct does not implement serde traits, breaking
@@ -126,7 +133,8 @@ mod tests {
     }
 
     #[test]
-    fn string_family_mapping() {
+    fn all_string_derived_types() {
+        // Every type derived from string_t in the OCSF spec.
         for t in &[
             "hostname_t",
             "ip_t",
@@ -135,7 +143,15 @@ mod tests {
             "email_t",
             "uuid_t",
             "file_path_t",
+            "file_name_t",
+            "file_hash_t",
             "subnet_t",
+            "username_t",
+            "process_name_t",
+            "resource_uid_t",
+            "datetime_t",
+            "bytestring_t",
+            "reg_key_path_t",
         ] {
             assert_eq!(
                 ocsf_to_proto_type(t),
@@ -143,6 +159,20 @@ mod tests {
                 "expected string for {t}"
             );
         }
+    }
+
+    #[test]
+    fn timestamp_is_int64_not_string() {
+        // OCSF timestamp_t is epoch milliseconds (base type: long_t).
+        // Must be int64, NOT string and NOT google.protobuf.Timestamp.
+        assert_eq!(ocsf_to_proto_type("timestamp_t"), Some("int64"));
+    }
+
+    #[test]
+    fn datetime_is_string() {
+        // OCSF datetime_t is RFC 3339 string (base type: string_t).
+        // Must be string, NOT int64. This is different from timestamp_t.
+        assert_eq!(ocsf_to_proto_type("datetime_t"), Some("string"));
     }
 
     #[test]
