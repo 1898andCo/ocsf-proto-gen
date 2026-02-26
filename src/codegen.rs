@@ -531,6 +531,10 @@ fn resolve_object_field_type(
 }
 
 /// Resolve an `object_t` attribute to a qualified proto message reference.
+///
+/// If the referenced object has no non-deprecated attributes (e.g., the OCSF
+/// base `object` type used by the `unmapped` field), emits `string` instead —
+/// an empty proto message cannot hold data, so `string` (for JSON) is correct.
 fn resolve_object_ref(
     attr: &OcsfAttribute,
     version_slug: &str,
@@ -540,20 +544,31 @@ fn resolve_object_ref(
 ) -> (bool, String) {
     let obj_type = attr.object_type.as_deref().unwrap_or("unknown");
     let sanitized = sanitize_object_name(obj_type);
-    let pascal = to_pascal_case(&sanitized);
 
-    let exists = objects.contains_key(obj_type)
-        || objects.contains_key(&sanitized)
-        || objects
-            .values()
-            .any(|o| sanitize_object_name(&o.name) == sanitized);
+    let obj = objects
+        .get(obj_type)
+        .or_else(|| objects.get(&sanitized))
+        .or_else(|| {
+            objects
+                .values()
+                .find(|o| sanitize_object_name(&o.name) == sanitized)
+        });
 
-    if !exists {
+    let Some(obj) = obj else {
         eprintln!("warning: object type '{obj_type}' not found, defaulting to string");
         stats.unknown_types_defaulted += 1;
         return (repeated, "string".to_string());
+    };
+
+    // Empty objects (no non-deprecated attributes) produce empty proto messages
+    // that cannot hold data. Emit `string` instead so the field can carry JSON.
+    // This handles the OCSF `unmapped` field (type: object_t, object_type: object).
+    let has_fields = obj.attributes.values().any(|a| a.deprecated.is_none());
+    if !has_fields {
+        return (repeated, "string".to_string());
     }
 
+    let pascal = to_pascal_case(&sanitized);
     let qualified = format!("ocsf.{version_slug}.objects.{pascal}");
     (repeated, qualified)
 }

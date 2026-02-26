@@ -145,11 +145,15 @@ fn test_schema() -> OcsfSchema {
             ..default_attr()
         },
     );
+    // OCSF defines `unmapped` as object_t referencing the base `object` type
+    // (an empty object with zero attributes). The generator must emit `string`
+    // instead of an empty Object message reference.
     auth_attrs.insert(
         "unmapped".to_string(),
         OcsfAttribute {
-            type_name: "json_t".to_string(),
+            type_name: "object_t".to_string(),
             caption: "Unmapped Data".to_string(),
+            object_type: Some("object".to_string()),
             ..default_attr()
         },
     );
@@ -317,6 +321,20 @@ fn test_schema() -> OcsfSchema {
         },
     );
 
+    // The base OCSF `object` type — an empty object definition.
+    // Referenced by `unmapped` fields via object_type: "object".
+    objects.insert(
+        "object".to_string(),
+        OcsfObject {
+            name: "object".to_string(),
+            caption: "Object".to_string(),
+            description: String::new(),
+            extends: None,
+            attributes: BTreeMap::new(),
+            observable: None,
+        },
+    );
+
     OcsfSchema {
         version: "1.7.0".to_string(),
         classes,
@@ -352,7 +370,7 @@ fn end_to_end_generate_and_validate() {
 
     // Verify stats.
     assert_eq!(stats.classes_generated, 1);
-    assert_eq!(stats.objects_generated, 2); // network_endpoint + enrichment
+    assert_eq!(stats.objects_generated, 3); // network_endpoint + enrichment + object (empty)
     assert!(stats.deprecated_fields_skipped >= 1);
     assert!(stats.enums_generated >= 2); // activity_id + severity_id + type_id
 
@@ -389,8 +407,9 @@ fn generated_proto_has_correct_content() {
     assert!(proto.contains("ocsf.v1_7_0.objects.NetworkEndpoint src_endpoint"));
     assert!(proto.contains("repeated ocsf.v1_7_0.objects.Enrichment enrichments"));
 
-    // Verify json_t maps to string (NOT google.protobuf.Struct).
+    // Verify unmapped (object_t → empty object) maps to string, not an empty message.
     assert!(proto.contains("string unmapped"));
+    assert!(!proto.contains("Object unmapped"));
     assert!(!proto.contains("google.protobuf.Struct"));
 
     // Verify deprecated field is skipped.
@@ -526,6 +545,28 @@ fn schema_load_from_file() {
     assert_eq!(loaded.version, "1.7.0");
     assert_eq!(loaded.classes.len(), 0);
     assert_eq!(loaded.objects.len(), 0);
+}
+
+#[test]
+fn empty_object_type_emits_string() {
+    // An object_t referencing an object with zero attributes should emit
+    // `string` instead of an empty proto message reference.
+    let schema = test_schema();
+    let dir = tempdir();
+
+    codegen::generate(&schema, &["authentication".to_string()], &dir).unwrap();
+
+    let proto = std::fs::read_to_string(dir.join("ocsf/v1_7_0/events/iam/iam.proto")).unwrap();
+
+    // unmapped is object_t → "object" (empty) → must become string.
+    assert!(
+        proto.contains("string unmapped"),
+        "expected `string unmapped`, got:\n{proto}"
+    );
+    assert!(
+        !proto.contains("Object unmapped"),
+        "empty object type should NOT produce message reference"
+    );
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
