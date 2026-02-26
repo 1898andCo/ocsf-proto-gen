@@ -21,7 +21,9 @@ cargo doc --no-deps
 ## Code standards
 
 - All public types and functions must have `///` doc comments
-- No `panic!()` or `unwrap()` in non-test code
+- No `panic!()` or `unwrap()` in non-test code, with one exception:
+  `writeln!(string, ...)` is infallible (`fmt::Write` for `String` never fails),
+  so `.unwrap()` is acceptable there
 - Use `thiserror` for error types, propagate with `?`
 - Tests use `unwrap()` freely — panics in tests are fine
 
