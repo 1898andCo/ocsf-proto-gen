@@ -123,17 +123,23 @@ println!("Generated {} classes, {} objects", stats.classes_generated, stats.obje
 
 ## OCSF type mapping
 
-| OCSF type | Proto type |
-|-----------|-----------|
-| `string_t`, `hostname_t`, `ip_t`, `mac_t`, `url_t`, `email_t`, `uuid_t` | `string` |
-| `integer_t`, `port_t` | `int32` |
-| `long_t`, `timestamp_t` | `int64` |
-| `float_t` | `double` |
-| `boolean_t` | `bool` |
-| `json_t` | `string` |
-| Object references | Qualified message type |
-| Integer-keyed enums | Qualified enum type |
-| String-keyed enums | `string` (not a proto enum) |
+OCSF defines 24 types organized in a hierarchy. All mappings follow the OCSF type definitions:
+
+| OCSF type | Proto type | OCSF base type | Notes |
+|-----------|-----------|----------------|-------|
+| `boolean_t` | `bool` | primitive | |
+| `integer_t` | `int32` | primitive | Signed 32-bit |
+| `long_t` | `int64` | primitive | Signed 64-bit |
+| `float_t` | `double` | primitive | 64-bit float |
+| `string_t` | `string` | primitive | UTF-8 |
+| `json_t` | `string` | primitive | NOT `google.protobuf.Struct` |
+| `timestamp_t` | `int64` | `long_t` | Epoch milliseconds |
+| `port_t` | `int32` | `integer_t` | Range 0-65535 |
+| `datetime_t` | `string` | `string_t` | RFC 3339 (e.g., `2024-09-10T23:20:50.520Z`) |
+| `hostname_t`, `ip_t`, `mac_t`, `url_t`, `email_t`, `uuid_t`, `file_name_t`, `file_path_t`, `file_hash_t`, `process_name_t`, `resource_uid_t`, `username_t`, `subnet_t`, `bytestring_t`, `reg_key_path_t` | `string` | `string_t` | All string-derived types |
+| Object references | Qualified message type | — | e.g., `ocsf.v1_7_0.objects.User` |
+| Integer-keyed enums | Qualified enum type | — | e.g., `AUTHENTICATION_ACTIVITY_ID` |
+| String-keyed enums | `string` | — | Not valid proto enums (e.g., HTTP methods) |
 
 ## Features
 

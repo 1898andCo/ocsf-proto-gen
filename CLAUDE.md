@@ -41,6 +41,7 @@ OCSF export API (schema.ocsf.io/export/schema?version=X)
 ### Key design decisions
 
 - **Schema source**: Uses the OCSF `/export/schema` API which returns fully-resolved classes (inheritance already applied). No need to implement OCSF's extends/include/profile merging.
+- **Type mapping follows OCSF type hierarchy**: 6 primitives (`boolean_t`, `integer_t`, `long_t`, `float_t`, `string_t`, `json_t`) plus 18 derived types. `timestamp_t` derives from `long_t` → `int64` (epoch ms). `datetime_t` derives from `string_t` → `string` (RFC 3339). `port_t` derives from `integer_t` → `int32`. All other derived types inherit from `string_t` → `string`. See `type_map.rs` for the full table.
 - **json_t → string**: Maps `json_t` to proto `string`, NOT `google.protobuf.Struct`. Struct breaks prost serde.
 - **Deprecated fields**: Skipped entirely from output.
 - **String-keyed enums**: OCSF has both integer-keyed (`"0": "Unknown"`) and string-keyed (`"GET": "Get"`) enums. Only integer-keyed become proto enums. Detected via `key.parse::<i32>().is_ok()`.
