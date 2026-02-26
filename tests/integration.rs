@@ -531,7 +531,14 @@ fn schema_load_from_file() {
 // ── Helpers ────────────────────────────────────────────────────────────
 
 fn tempdir() -> std::path::PathBuf {
-    let dir = std::env::temp_dir().join(format!("ocsf-proto-gen-test-{}", std::process::id()));
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+    let id = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let dir = std::env::temp_dir().join(format!(
+        "ocsf-proto-gen-test-{}-{}",
+        std::process::id(),
+        id
+    ));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     dir
