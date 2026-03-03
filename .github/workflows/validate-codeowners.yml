@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   validate-codeowners:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Ubuntu, Common]
     timeout-minutes: 5
     steps:
     - name: "Checkout source code at current commit"
