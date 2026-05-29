@@ -23,7 +23,9 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+      - uses: step-security/dtolnay-rust-toolchain@8dd607977d06adf4ed49b190381e74c17a9dd25f # v1.0.0
+        with:
+          toolchain: stable
       - uses: step-security/rust-cache@9be15b830520fab0ec3939586e917e4855cf76bd # v2.8.3
       - run: cargo test --all-features
       - run: cargo clippy --all-features -- -D warnings
@@ -40,7 +42,9 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+      - uses: step-security/dtolnay-rust-toolchain@8dd607977d06adf4ed49b190381e74c17a9dd25f # v1.0.0
+        with:
+          toolchain: stable
       - uses: step-security/rust-cache@9be15b830520fab0ec3939586e917e4855cf76bd # v2.8.3
       - run: cargo publish
         env:
