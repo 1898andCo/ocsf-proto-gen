@@ -2,8 +2,6 @@
 //!
 //! # Type Mapping Table
 //!
-//! | OCSF type | Proto type | Notes |
-//! |-----------|-----------|-------|
 //! | OCSF type | Proto type | OCSF base type | Notes |
 //! |-----------|-----------|----------------|-------|
 //! | `boolean_t` | `bool` | primitive | |
