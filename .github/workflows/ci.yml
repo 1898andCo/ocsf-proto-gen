@@ -32,7 +32,7 @@ jobs:
       - uses: step-security/dtolnay-rust-toolchain@8dd607977d06adf4ed49b190381e74c17a9dd25f # v1.0.0
         with:
           toolchain: stable
-      - uses: step-security/rust-cache@9be15b830520fab0ec3939586e917e4855cf76bd # v2.8.3
+      - uses: step-security/rust-cache@1b3ee6282a8cf15b5a9f6e7dca8f9c522280ff34 # v2.9.3
       - run: cargo check --all-features
 
   fmt:
@@ -75,7 +75,7 @@ jobs:
         with:
           toolchain: stable
           components: clippy
-      - uses: step-security/rust-cache@9be15b830520fab0ec3939586e917e4855cf76bd # v2.8.3
+      - uses: step-security/rust-cache@1b3ee6282a8cf15b5a9f6e7dca8f9c522280ff34 # v2.9.3
       - run: cargo clippy --all-features -- -D warnings
 
   test:
@@ -97,7 +97,7 @@ jobs:
       - uses: step-security/dtolnay-rust-toolchain@8dd607977d06adf4ed49b190381e74c17a9dd25f # v1.0.0
         with:
           toolchain: stable
-      - uses: step-security/rust-cache@9be15b830520fab0ec3939586e917e4855cf76bd # v2.8.3
+      - uses: step-security/rust-cache@1b3ee6282a8cf15b5a9f6e7dca8f9c522280ff34 # v2.9.3
       - run: cargo test --all-features
 
   doc:
@@ -119,7 +119,7 @@ jobs:
       - uses: step-security/dtolnay-rust-toolchain@8dd607977d06adf4ed49b190381e74c17a9dd25f # v1.0.0
         with:
           toolchain: stable
-      - uses: step-security/rust-cache@9be15b830520fab0ec3939586e917e4855cf76bd # v2.8.3
+      - uses: step-security/rust-cache@1b3ee6282a8cf15b5a9f6e7dca8f9c522280ff34 # v2.9.3
       - run: cargo doc --no-deps --all-features
         env:
           RUSTDOCFLAGS: -D warnings
